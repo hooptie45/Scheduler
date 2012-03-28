@@ -1,7 +1,6 @@
 (ns schedule.scheduler)
 
 ;; Object to represent a work day
-;; TODO: Make the number of shifts variable
 (defrecord Day [emp day am pm])
 
 ;; One your (D)ream schedule, you would want to work this shift
@@ -38,69 +37,19 @@
 
 
 
-(defn available
-  ""
-  ([work-day work-shift processed-availablity] (available work-day work-shift processed-availablity :emp))
-  ([work-day work-shift processed-availablity finisher-fn]     
-     (map finisher-fn
-          (filter
-           (fn [el]
-             (and
-              (= work-day (:day el))
-              (>= (work-shift el) 0)))
-           processed-availablity))))
 
-(comment
-  
-  ;; Test availability spec, Cut and paste from an excel spreadsheet,
-  ;; with minor editing
-  ;;
-  ;; TODO: Pull directly from a data source, like an excel
-  ;; spreadsheet, or HTTP request
-  (def test-availity-spec
-    [;Name 		WED	THU	FRI	SAT	SUN	MON	TUE 
-     :Adam		A A	X X	A X	A X	A X	A X	X X
-     :Alyssa		X A	X A	X X	X A	X A	X X	X A 
-     :Caitlin       	X A	X A	X A	A X	X A	X A	X X             
-     :Cathy		A X	A X	X X	X X	A X	A X	A X 
-     :Caylie		X A	X A	A A	A A	X X	A X	A X 
-     :Cinnamon		X X	A X	A X	A X	X X	X X	X X 
-     :Davina		X X	X X	X A	X A	X A	X A	X X 
-     :Dawn		A X	A X	A A	X X	X X	A X	A X 
-     :Denise		X X	A X	A A	X A	A A	A A	A A 
-     :Frankie       	A A	X X	A A	A A	X X	X A	X A 
-     :Heather       	A X	X X	A X	A X	X X	A X	X X 
-     :Hope		A A	X X	X A	X A	A A	X X	X X 
-     :Jonathan		X A	X A	X X	X X	X X	X A	X A 
-     :Kathy		X A	X A	X A	X X	X X	X A	X A 
-     :Kimmie		X A	X X	X X	X X	X X	X X	X A
-     :Sean		X A	X A	X A	X A	X A	X X	X X])
-  (def test-days (process-schedule :spec test-availity-spec))
-  
-  (available :mon :am test-days)
-  (available :mon :pm test-days
-             (fn [{:keys [day shift emp]}]
-               (swap! *schedule-db* update-in [day] conj emp)))
-  
-  
-  (process-schedule
-   [;Name 		WED	THU	FRI	SAT	SUN	MON	TUE 
-    :Adam		A A	X X	A X	A X	A X	A X	X X
-    :Alyssa		X A	X A	X X	X A	X A	X X	X A 
-    :Caitlin       	X A	X A	X A	A X	X A	X A	X X             
-    :Cathy		A X	A X	X X	X X	A X	A X	A X 
-    :Caylie		X A	X A	A A	A A	X X	A X	A X 
-    :Cinnamon		X X	A X	A X	A X	X X	X X	X X 
-    :Davina		X X	X X	X A	X A	X A	X A	X X 
-    :Dawn		A X	A X	A A	X X	X X	A X	A X 
-    :Denise		X X	A X	A A	X A	A A	A A	A A 
-    :Frankie       	A A	X X	A A	A A	X X	X A	X A 
-    :Heather       	A X	X X	A X	A X	X X	A X	X X 
-    :Hope		A A	X X	X A	X A	A A	X X	X X 
-    :Jonathan		X A	X A	X X	X X	X X	X A	X A 
-    :Kathy		X A	X A	X A	X X	X X	X A	X A 
-    :Kimmie		X A	X X	X X	X X	X X	X X	X A
-    :Sean		X A	X A	X A	X A	X A	X X	X X])
-  )
+(defn available
+  [& {:keys [day shift spec finisher-fn  scope]
+      :or {finisher-fn identity
+           scope #{A}}}]   
+  (map finisher-fn
+       (filter
+        (fn [el]
+          (and
+           (= day (:day el))
+           (scope (shift el))))
+        spec)))
+
+
 
 
